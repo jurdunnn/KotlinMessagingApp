@@ -10,7 +10,11 @@ import android.widget.EditText
 import com.example.kotlinmessagingapp.R
 import com.example.kotlinmessagingapp.main.MainActivity
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.auth.ktx.userProfileChangeRequest
+import com.google.firebase.ktx.Firebase
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -37,34 +41,41 @@ class RegisterActivity : AppCompatActivity() {
 
         registerButton = findViewById(R.id.registerSendButton)
         loginButton = findViewById(R.id.toSigninButton)
+
+        auth = Firebase.auth
     }
 
     fun register(v: View) {
-
-        val profileUpdates = userProfileChangeRequest {
-            displayName = usernameTextBox.text.toString()
-            //photoUri = Uri.parse("https://example.com/jane-q-user/profile.jpg")
-        }
-
         auth.createUserWithEmailAndPassword(
             emailTextBox.text.toString(),
             passwordTextBox.text.toString()
         ).addOnCompleteListener(this) { task ->
             if (task.isSuccessful) {
+                //log
                 Log.d("EmailPasswordCreation", "username passwordSuccess")
 
                 //get user
                 val user = auth.currentUser
 
-                //add username to user
-                user!!.updateProfile(profileUpdates).addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        Log.d("EmailPasswordCreation", "username success")
-                    }
-                }
+                //add username
+                updateProfile(user)
 
                 //goto main activity
                 toMain()
+            }
+        }
+    }
+
+    private fun updateProfile(user: FirebaseUser?) {
+        //profile request builder
+        val profileUpdates = userProfileChangeRequest {
+            displayName = usernameTextBox.text.toString()
+        }
+
+        //add username to user
+        user!!.updateProfile(profileUpdates).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                Log.d("EmailPasswordCreation", "username success")
             }
         }
     }
