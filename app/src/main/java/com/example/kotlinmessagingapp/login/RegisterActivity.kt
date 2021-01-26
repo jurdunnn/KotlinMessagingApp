@@ -7,11 +7,12 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import com.example.kotlinmessagingapp.R
 import com.example.kotlinmessagingapp.main.MainActivity
+import com.google.android.gms.tasks.OnFailureListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.auth.ktx.userProfileChangeRequest
 import com.google.firebase.ktx.Firebase
@@ -46,24 +47,36 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     fun register(v: View) {
-        auth.createUserWithEmailAndPassword(
-            emailTextBox.text.toString(),
-            passwordTextBox.text.toString()
-        ).addOnCompleteListener(this) { task ->
-            if (task.isSuccessful) {
-                //log
-                Log.d("EmailPasswordCreation", "username passwordSuccess")
+        //run format checks
+        if(runChecks(emailTextBox.text.toString(), passwordTextBox.text.toString(), usernameTextBox.text.toString())) {
+            auth.createUserWithEmailAndPassword(
+                emailTextBox.text.toString(),
+                passwordTextBox.text.toString()
+            ).addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    //log
+                    Log.d("EmailPasswordCreation", "email password success")
 
-                //get user
-                val user = auth.currentUser
+                    //get user
+                    val user = auth.currentUser
 
-                //add username
-                updateProfile(user)
+                    //add username
+                    updateProfile(user)
 
-                //goto main activity
-                toMain()
-            }
+                    //toast the user
+                    Toast.makeText(this, "Welcome! Please enjoy!", Toast.LENGTH_SHORT).show()
+
+                    //goto main activity
+                    toMain()
+                }
+            }.addOnFailureListener(OnFailureListener {
+                Log.d("EmailPasswordCreation", "email password failure")
+                Toast.makeText(this, "Something went wrong...", Toast.LENGTH_SHORT).show()
+            })
+        } else {
+            Toast.makeText(this, "Error: Please ensure formatting is correct.", Toast.LENGTH_SHORT).show() //Todo less vague
         }
+
     }
 
     private fun updateProfile(user: FirebaseUser?) {
@@ -77,7 +90,9 @@ class RegisterActivity : AppCompatActivity() {
             if (task.isSuccessful) {
                 Log.d("EmailPasswordCreation", "username success")
             }
-        }
+        }.addOnFailureListener(OnFailureListener {
+            Log.d("EmailPasswordCreation", "username failure")
+        })
     }
 
     fun toLogin(v: View) {
@@ -90,5 +105,22 @@ class RegisterActivity : AppCompatActivity() {
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
         finish()
+    }
+
+    //if back button is pressed open login activity
+    override fun onBackPressed() {
+        super.onBackPressed()
+        val intent = Intent(this, LoginActivity::class.java)
+        startActivity(intent)
+        finish()
+    }
+
+    private fun runChecks(email: String, password: String, username: String): Boolean {
+        return (email.isNotEmpty() //check email is not empty
+                && email.contains('@') //check email format
+                && password.isNotEmpty() // check password is not empty
+                && password.length > 5 // check password length
+                && username.isNotEmpty() // check username is not empty
+                && !username.contains(' ')) //check username does not contain a space
     }
 }

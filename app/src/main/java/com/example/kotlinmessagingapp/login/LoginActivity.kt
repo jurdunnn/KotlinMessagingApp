@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.kotlinmessagingapp.R
 import com.example.kotlinmessagingapp.main.MainActivity
@@ -43,20 +44,32 @@ class LoginActivity : AppCompatActivity() {
 
     fun login(v: View) {
         val email: String = emailTextBox.text.toString()
-        val password: String = passwordTextBox.toString()
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    // Sign in success, update UI with the signed-in user's information
-                    val user = auth.currentUser
-                    toMain()
-                } else {
-                    // If sign in fails, display a message to the user.
+        val password: String = passwordTextBox.text.toString()
+
+        if(runChecks(email, password)) {
+            auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this) { task ->
+                    if (task.isSuccessful) {
+                        // Sign in success, update UI with the signed-in user's information
+                        val user = auth.currentUser
+
+                        //toast sign in success
+                        Toast.makeText(this, "Signed in", Toast.LENGTH_SHORT).show()
+
+                        //go to main activityy
+                        toMain()
+                    } else {
+                        // If sign in fails, display a message to the user.
+                        Toast.makeText(this, "Failed to retrieve account", Toast.LENGTH_SHORT).show()
+                    }
                 }
-            }
+        } else {
+            Toast.makeText(this, "Could not recognise email and/or password", Toast.LENGTH_SHORT).show()
+        }
+
     }
 
-    public fun toRegister(v: View) {
+    fun toRegister(v: View) {
         val intent = Intent(this, RegisterActivity::class.java)
         startActivity(intent)
         finish()
@@ -67,5 +80,12 @@ class LoginActivity : AppCompatActivity() {
         startActivity(intent)
         finish()
     }
+
+    private fun runChecks(email: String, password: String): Boolean {
+        return (email.isNotEmpty() //Check email field is not empty
+                && email.contains("@") // Check email field contains an @ symbol
+                && password.isNotEmpty()) // Check password is not empty
+    }
+
 
 }
